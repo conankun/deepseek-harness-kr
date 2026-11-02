@@ -1,5 +1,5 @@
 /**
- * In-memory LRU + TTL cache for synthesized PCM (CONTRACT §2).
+ * In-memory LRU + TTL cache for synthesized PCM.
  *
  * Keyed by sha256(model \0 voice \0 text): a voice line is a pure function of
  * those three, so one entry serves every repeat. Bounded by both entry count

@@ -1,5 +1,5 @@
 /**
- * Pure playback helpers for the dsh-tts client (CONTRACT §4).
+ * Pure playback helpers for the dsh-tts client.
  *
  * Free of DOM and Web Audio globals so node:test can exercise byte alignment
  * and scheduling with a mocked AudioContext.

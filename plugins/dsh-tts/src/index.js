@@ -1,5 +1,5 @@
 /**
- * Host entry of dsh-tts (CONTRACT §6): register the speech routes on the web
+ * Host entry of dsh-tts: register the speech routes on the web
  * server. Disabled means the whole feature is absent — no /state, no /speak,
  * no listener on the client — so nothing changes for a profile that never
  * opted in.

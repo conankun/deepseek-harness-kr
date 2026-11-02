@@ -1,5 +1,5 @@
 /**
- * Config defaults and validation for dsh-tts (CONTRACT §5).
+ * Config defaults and validation for dsh-tts.
  *
  * A bad value is refused when the plugin activates, naming the exact field:
  * a broken baseUrl or model id cannot be repaired at request time. Unknown

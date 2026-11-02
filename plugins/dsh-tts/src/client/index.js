@@ -1,5 +1,5 @@
 /**
- * Browser half of dsh-tts (CONTRACT §3): speak the character's bubble lines and
+ * Browser half of dsh-tts: speak the character's bubble lines and
  * drive the mouth from the audio level.
  *
  * One GET decides whether to attach. Disabled, or a 404 from an older host,

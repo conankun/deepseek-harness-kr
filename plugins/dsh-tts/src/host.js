@@ -1,5 +1,5 @@
 /**
- * Host half of dsh-tts (CONTRACT §2): the state route the browser half reads
+ * Host half of dsh-tts: the state route the browser half reads
  * once, and the streaming proxy that keeps the API key server-side.
  *
  * The proxy only speaks the standard OpenAI /audio/speech shape. A non-2xx

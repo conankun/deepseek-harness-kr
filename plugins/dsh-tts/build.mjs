@@ -1,5 +1,5 @@
 /**
- * Bundle src/client/index.js into lib/client.js (CONTRACT §6).
+ * Bundle src/client/index.js into lib/client.js.
  *
  * The bundle is committed so the plugin works without a build step: the web
  * client loads it through window.__ModuleLoader__.load, which expects a
