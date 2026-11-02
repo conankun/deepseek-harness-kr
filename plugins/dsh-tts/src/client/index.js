@@ -212,6 +212,8 @@ export async function apply(ctx) {
       } catch {
         // Autoplay refusal is silent; scheduling still works once resumed.
       }
+      // A newer line may have superseded this one while resume() was pending.
+      if (playback !== session) return
       const analyser = audio.createAnalyser()
       analyser.fftSize = 512
       analyser.connect(audio.destination)
@@ -240,9 +242,10 @@ export async function apply(ctx) {
       scheduler.finish()
       endStream(session)
     } catch {
+      // Always release this session's own graph, even if a newer line replaced it.
+      teardown(session)
       if (playback === session) {
         playback = null
-        teardown(session)
         voice(null)
       }
     }

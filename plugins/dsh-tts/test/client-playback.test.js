@@ -27,22 +27,27 @@ function pcmStream(chunks) {
 function makeAudio() {
   const started = []
   const stopped = []
-  const analyser = {
-    fftSize: 512,
-    disconnected: false,
-    connect() {},
-    disconnect() {
-      analyser.disconnected = true
-    },
-    getFloatTimeDomainData(samples) {
-      samples.fill(0.5)
-    },
+  const analysers = []
+  const makeAnalyser = () => {
+    const analyser = {
+      fftSize: 512,
+      disconnected: false,
+      connect() {},
+      disconnect() {
+        analyser.disconnected = true
+      },
+      getFloatTimeDomainData(samples) {
+        samples.fill(0.5)
+      },
+    }
+    analysers.push(analyser)
+    return analyser
   }
   const context = {
     currentTime: 0,
     state: 'running',
     destination: {},
-    createAnalyser: () => analyser,
+    createAnalyser: makeAnalyser,
     createBuffer: (channels, length, sampleRate) => ({
       duration: length / sampleRate,
       length,
@@ -70,7 +75,7 @@ function makeAudio() {
     resume: async () => {},
     close: async () => {},
   }
-  return { context, started, stopped, analyser }
+  return { context, started, stopped, analysers }
 }
 
 /** Install browser-ish globals and return handles for driving time and events. */
@@ -160,7 +165,7 @@ test('fast response keeps lip-sync metering until playback finishes', async (t) 
   // Actual playback completion (scheduler idle) releases everything.
   harness.audio.started[0].source.onended()
   assert.equal(harness.voiceCalls.at(-1), null)
-  assert.equal(harness.audio.analyser.disconnected, true)
+  assert.equal(harness.audio.analysers[0].disconnected, true)
 
   // The next line still plays after a clean release.
   harness.emit({ text: 'again', ms: 0, kind: 'reaction' })
@@ -182,3 +187,34 @@ test('a new ms=0 line stops audio that is still playing from the previous line',
   assert.ok(harness.audio.stopped.includes(harness.audio.started[0].source), 'previous source stopped')
   assert.equal(harness.audio.started.length, 2, 'second line scheduled')
 })
+
+test('barge-in during AudioContext.resume never schedules the superseded line', async (t) => {
+  const harness = createHarness(t, [[new Uint8Array(4800)], [new Uint8Array(4800)]])
+  let resumeCalls = 0
+  let releaseResume = () => {}
+  harness.audio.context.resume = () => {
+    resumeCalls += 1
+    if (resumeCalls === 1) {
+      return new Promise((resolve) => {
+        releaseResume = resolve
+      })
+    }
+    return Promise.resolve()
+  }
+
+  await apply(harness.ctx)
+  harness.emit({ text: 'first', ms: 0, kind: 'reaction' })
+  await harness.flush()
+  assert.equal(resumeCalls, 1, 'first line is waiting on resume()')
+
+  // The second line supersedes the first while its resume() is still pending.
+  harness.emit({ text: 'second', ms: 0, kind: 'reaction' })
+  await harness.flush()
+  releaseResume()
+  await harness.flush()
+
+  assert.equal(harness.fetchCalls.length, 2)
+  assert.equal(harness.audio.started.length, 1, 'only the new line schedules audio')
+  assert.equal(harness.audio.analysers.length, 1, 'superseded line created no audio graph')
+})
+

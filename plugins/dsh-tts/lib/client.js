@@ -264,6 +264,7 @@ async function apply(ctx) {
         await audio.resume();
       } catch {
       }
+      if (playback !== session) return;
       const analyser = audio.createAnalyser();
       analyser.fftSize = 512;
       analyser.connect(audio.destination);
@@ -291,9 +292,9 @@ async function apply(ctx) {
       scheduler.finish();
       endStream(session);
     } catch {
+      teardown(session);
       if (playback === session) {
         playback = null;
-        teardown(session);
         voice(null);
       }
     }
