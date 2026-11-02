@@ -251,9 +251,9 @@ export async function apply(ctx) {
   }
 
   ctx.effect(() => {
-    document.addEventListener(SAY_EVENT, onSay)
+    window.addEventListener(SAY_EVENT, onSay)
     return () => {
-      document.removeEventListener(SAY_EVENT, onSay)
+      window.removeEventListener(SAY_EVENT, onSay)
       stopPlayback()
       try {
         audioContext?.close()

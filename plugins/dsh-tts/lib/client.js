@@ -308,9 +308,9 @@ async function apply(ctx) {
     void speak(detail);
   }
   ctx.effect(() => {
-    document.addEventListener(SAY_EVENT, onSay);
+    window.addEventListener(SAY_EVENT, onSay);
     return () => {
-      document.removeEventListener(SAY_EVENT, onSay);
+      window.removeEventListener(SAY_EVENT, onSay);
       stopPlayback();
       try {
         audioContext?.close();
