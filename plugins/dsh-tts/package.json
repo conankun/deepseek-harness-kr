@@ -1,0 +1,29 @@
+{
+  "name": "dsh-tts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Speech for the DeepSeek Harness character's speech bubbles — streaming OpenAI-compatible TTS, lipsync from the audio",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src/",
+    "lib/client.js",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test/"
+  }
+}
