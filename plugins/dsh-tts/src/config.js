@@ -10,7 +10,7 @@
 /** Defaults, exactly as documented in cordis.patch.yml. */
 export const DEFAULTS = {
   enabled: false,
-  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini-tts', voice: 'alloy', speed: 1, apiKeyEnv: 'OPENAI_API_KEY', headers: {}, timeoutMs: 30000 },
+  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini-tts', voice: 'alloy', speed: 1, apiKeyEnv: 'OPENAI_API_KEY', headers: {}, timeoutMs: 30000, extraBody: {} },
   stream: { enabled: true, pcmSampleRate: 24000 },
   voiceLines: { reactions: true, status: false, mutters: false, others: true },
   cache: { enabled: true, maxEntries: 200, ttlMs: 604800000, maxCacheBytes: 33554432 },
@@ -64,6 +64,18 @@ function num(source, key, path, fallback, min, max, { integer = false, exclusive
   return resolved
 }
 
+/** Model-specific request fields (not portable): shallow-copied JSON object. */
+function jsonObject(source, key, path, fallback) {
+  const value = source[key]
+  if (value === undefined) return fallback
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(path, 'an object', value)
+  try {
+    return JSON.parse(JSON.stringify(value))
+  } catch {
+    fail(path, 'a JSON-serializable object', value)
+  }
+}
+
 function stringMap(source, key, path) {
   const value = source[key]
   if (value === undefined) return {}
@@ -100,6 +112,7 @@ export function normalize(raw) {
       apiKeyEnv: text(openai, 'apiKeyEnv', 'openai.apiKeyEnv', DEFAULTS.openai.apiKeyEnv),
       headers: stringMap(openai, 'headers', 'openai.headers'),
       timeoutMs: num(openai, 'timeoutMs', 'openai.timeoutMs', DEFAULTS.openai.timeoutMs, 1000, 600000, { integer: true }),
+      extraBody: jsonObject(openai, 'extraBody', 'openai.extraBody', DEFAULTS.openai.extraBody),
     },
     stream: {
       enabled: bool(stream, 'enabled', 'stream.enabled', DEFAULTS.stream.enabled),

@@ -317,3 +317,43 @@ test('cache skips oversized payloads and expires entries', () => {
   assert.equal(cache.set('c', Buffer.alloc(4)), true)
   assert.equal(cache.size, 2)
 })
+
+test('model-specific extraBody is merged, standard fields win', async () => {
+  process.env[KEY_ENV] = 'test-key'
+  const upstream = await startUpstream()
+  const host = await startHost(upstream.port, {
+    openai: {
+      apiKeyEnv: KEY_ENV,
+      extraBody: { ref_audio: 'data:audio/wav;base64,AAAA', ref_text: 'reference', response_format: 'mp3' },
+    },
+  })
+  try {
+    const response = await speak(host.url, { text: 'hello' })
+    assert.equal(response.status, 200)
+    await response.arrayBuffer()
+    const body = upstream.stats.bodies.at(-1)
+    assert.equal(body.ref_audio, 'data:audio/wav;base64,AAAA')
+    assert.equal(body.ref_text, 'reference')
+    assert.equal(body.response_format, 'pcm')
+    assert.equal(body.stream_format, 'audio')
+  } finally {
+    await host.close()
+    await upstream.close()
+    delete process.env[KEY_ENV]
+  }
+})
+
+test('cache disabled calls upstream on every repeat', async () => {
+  process.env[KEY_ENV] = 'test-key'
+  const upstream = await startUpstream()
+  const host = await startHost(upstream.port, { openai: { apiKeyEnv: KEY_ENV }, cache: { enabled: false } })
+  try {
+    await (await speak(host.url, { text: 'repeat me' })).arrayBuffer()
+    await (await speak(host.url, { text: 'repeat me' })).arrayBuffer()
+    assert.equal(upstream.stats.calls, 2)
+  } finally {
+    await host.close()
+    await upstream.close()
+    delete process.env[KEY_ENV]
+  }
+})

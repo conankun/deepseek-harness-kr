@@ -29,6 +29,7 @@ openai:
   apiKeyEnv: "OPENAI_API_KEY"
   headers: {}                # 업스트림 추가 헤더 (Authorization은 덮어쓸 수 없음)
   timeoutMs: 30000
+  extraBody: {}              # 모델 전용 필드(비이식성). 예: Drama 3 ref_audio/ref_text. 표준 필드가 우선
 stream:
   enabled: true              # 스트리밍이 유일한 전송 방식이라 끄면 기능 전체가 꺼짐
   pcmSampleRate: 24000
@@ -38,7 +39,7 @@ voiceLines:                  # 대사 종류별 on/off
   mutters: false
   others: true
 cache:
-  enabled: true
+  enabled: true              # false로 끌 수 있음(매 발화마다 업스트림 호출)
   maxEntries: 200
   ttlMs: 604800000
   maxCacheBytes: 33554432    # 이보다 큰 오디오는 캐시하지 않음
@@ -67,8 +68,11 @@ limits:
 | 업스트림 비 2xx | 그 상태코드 + JSON `{error:{message}}` (오디오 헤더 전에) |
 | 플러그인 disabled | 404 (라우트 미등록) |
 
-업스트림 요청은 표준 OpenAI 필드만 사용합니다:
-`{ model, voice, input, response_format: "pcm", stream_format: "audio", speed? }` + `Authorization: Bearer`.
+업스트림 요청은 표준 OpenAI 필드 `{ model, voice, input, response_format: "pcm", stream_format: "audio", speed? }` +
+`Authorization: Bearer`이며, `openai.extraBody`가 있으면 그대로 병합됩니다(표준 필드가 우선).
+`extraBody`는 **모델 전용**입니다 — 예: Drama 3의 `ref_audio`/`ref_text`/`language`/`max_new_tokens`.
+`voice`는 엔드포인트가 아는 이름(OpenAI 보이스 또는 서버에 등록된 보이스 id)이어야 하며, `default`처럼 고정되지 않은
+이름은 발화마다 화자가 바뀔 수 있습니다.
 클라이언트가 연결을 끊으면 업스트림 요청도 abort됩니다.
 
 ## 빌드 / 테스트

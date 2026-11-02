@@ -127,7 +127,7 @@ export function createStateHandler(config) {
  */
 export function createSpeakHandler(config, deps = {}) {
   const fetchImpl = deps.fetch ?? globalThis.fetch
-  const cache = deps.cache ?? createCache({ ...config.cache, now: deps.now ?? Date.now })
+  const cache = deps.cache ?? (config.cache.enabled === false ? null : createCache({ ...config.cache, now: deps.now ?? Date.now }))
   const { openai, limits } = config
 
   return async function speakHandler(req, res) {
@@ -159,8 +159,8 @@ export function createSpeakHandler(config, deps = {}) {
       return
     }
 
-    const key = cacheKey(openai.model, openai.voice, text)
-    const cached = cache.get(key)
+    const key = cacheKey(openai.model, openai.voice, text, JSON.stringify(openai.extraBody ?? {}))
+    const cached = cache?.get(key) ?? null
     if (cached !== null) {
       res.writeHead(200, pcmHeaders('hit', cached.length))
       res.end(cached)
@@ -196,6 +196,9 @@ export function createSpeakHandler(config, deps = {}) {
         method: 'POST',
         headers: { ...openai.headers, 'content-type': 'application/json', authorization: 'Bearer ' + apiKey },
         body: JSON.stringify({
+          // Model-specific fields first (e.g. Drama 3 ref_audio/ref_text); the
+          // standard contract below always wins on conflict.
+          ...openai.extraBody,
           model: openai.model,
           voice: openai.voice,
           input: text,
@@ -226,7 +229,7 @@ export function createSpeakHandler(config, deps = {}) {
         }
       }
       res.end()
-      if (!clientGone && !overflow && received > 0) cache.set(key, Buffer.concat(chunks, received))
+      if (!clientGone && !overflow && received > 0) cache?.set(key, Buffer.concat(chunks, received))
     } catch (error) {
       if (clientGone) return
       if (!res.headersSent) {

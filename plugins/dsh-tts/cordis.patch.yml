@@ -20,6 +20,7 @@
           apiKeyEnv: "OPENAI_API_KEY"
           headers: {}
           timeoutMs: 30000
+          extraBody: {}         # 모델 전용 필드(비이식성): ref_audio/ref_text 등. 표준 필드가 우선
         stream:
           enabled: true
           pcmSampleRate: 24000

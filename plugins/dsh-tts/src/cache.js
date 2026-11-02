@@ -15,8 +15,8 @@ import { createHash } from 'node:crypto'
  * @param text - exact input text.
  * @returns lowercase sha256 hex digest.
  */
-export function cacheKey(model, voice, text) {
-  return createHash('sha256').update(model + '\u0000' + voice + '\u0000' + text).digest('hex')
+export function cacheKey(model, voice, text, extra = '') {
+  return createHash('sha256').update(model + '\u0000' + voice + '\u0000' + text + '\u0000' + extra).digest('hex')
 }
 
 /**
