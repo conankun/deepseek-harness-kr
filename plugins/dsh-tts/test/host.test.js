@@ -375,3 +375,19 @@ test('textPrefix is prepended to the upstream input', async () => {
     delete process.env[KEY_ENV]
   }
 })
+
+test('empty apiKeyEnv sends no Authorization and needs no key', async () => {
+  delete process.env[KEY_ENV]
+  const upstream = await startUpstream()
+  const host = await startHost(upstream.port, { openai: { apiKeyEnv: '' } })
+  try {
+    const response = await speak(host.url, { text: 'unauthenticated' })
+    assert.equal(response.status, 200)
+    await response.arrayBuffer()
+    assert.equal(upstream.stats.calls, 1)
+    assert.equal(upstream.stats.authorizations.at(-1), undefined)
+  } finally {
+    await host.close()
+    await upstream.close()
+  }
+})

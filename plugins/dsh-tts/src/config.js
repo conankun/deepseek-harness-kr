@@ -117,7 +117,8 @@ export function normalize(raw) {
       model: text(openai, 'model', 'openai.model', DEFAULTS.openai.model),
       voice: text(openai, 'voice', 'openai.voice', DEFAULTS.openai.voice),
       speed: num(openai, 'speed', 'openai.speed', DEFAULTS.openai.speed, 0.25, 4),
-      apiKeyEnv: text(openai, 'apiKeyEnv', 'openai.apiKeyEnv', DEFAULTS.openai.apiKeyEnv),
+      // '' opts out of auth entirely (local/self-hosted servers without a key).
+      apiKeyEnv: optionalText(openai, 'apiKeyEnv', 'openai.apiKeyEnv', DEFAULTS.openai.apiKeyEnv),
       headers: stringMap(openai, 'headers', 'openai.headers'),
       timeoutMs: num(openai, 'timeoutMs', 'openai.timeoutMs', DEFAULTS.openai.timeoutMs, 1000, 600000, { integer: true }),
       extraBody: jsonObject(openai, 'extraBody', 'openai.extraBody', DEFAULTS.openai.extraBody),

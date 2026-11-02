@@ -17,7 +17,7 @@
           model: "gpt-4o-mini-tts"
           voice: "alloy"
           speed: 1.0
-          apiKeyEnv: "OPENAI_API_KEY"
+          apiKeyEnv: "OPENAI_API_KEY"  # ""이면 인증 없이 요청(무인증 로컬 서버)
           headers: {}
           timeoutMs: 30000
           extraBody: {}         # 모델 전용 필드(비이식성): ref_audio/ref_text 등. 표준 필드가 우선

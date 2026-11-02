@@ -26,7 +26,7 @@ openai:
   model: "gpt-4o-mini-tts"
   voice: "alloy"
   speed: 1.0                 # 1.0이면 요청에서 생략
-  apiKeyEnv: "OPENAI_API_KEY"
+  apiKeyEnv: "OPENAI_API_KEY"  # ""이면 인증 없이 요청(무인증 로컬 서버)
   headers: {}                # 업스트림 추가 헤더 (Authorization은 덮어쓸 수 없음)
   timeoutMs: 30000
   extraBody: {}              # 모델 전용 필드(비이식성). 예: Drama 3 ref_audio/ref_text. 표준 필드가 우선
@@ -76,14 +76,14 @@ limits:
 | 상황 | 응답 |
 |---|---|
 | 잘못된 JSON / 빈 텍스트 / `maxCharsPerLine` 초과 | 400 `{error:{message}}` |
-| `apiKeyEnv` 미설정 또는 키 없음 | 503 `{error:{message}}` |
+| `apiKeyEnv`(비어 있지 않음)인데 해당 env가 없음/빈 값 | 503 `{error:{message}}` |
 | 캐시 hit | 200 `audio/pcm`, `cache-control: no-store`, `x-cache: hit` |
 | 캐시 miss | 200 `audio/pcm` 스트리밍, `x-cache: miss` |
 | 업스트림 비 2xx | 그 상태코드 + JSON `{error:{message}}` (오디오 헤더 전에) |
 | 플러그인 disabled | 404 (라우트 미등록) |
 
 업스트림 요청은 표준 OpenAI 필드 `{ model, voice, input, response_format: "pcm", stream_format: "audio", speed? }` +
-`Authorization: Bearer`이며, `openai.extraBody`가 있으면 그대로 병합됩니다(표준 필드가 우선).
+`Authorization: Bearer`(단, `apiKeyEnv: ""`이면 생략)이며, `openai.extraBody`가 있으면 그대로 병합됩니다(표준 필드가 우선).
 `extraBody`는 **모델 전용**입니다 — 예: Drama 3의 `ref_audio`/`ref_text`/`language`/`max_new_tokens`.
 `voice`는 엔드포인트가 아는 이름(OpenAI 보이스 또는 서버에 등록된 보이스 id)이어야 하며, `default`처럼 고정되지 않은
 이름은 발화마다 화자가 바뀔 수 있습니다.

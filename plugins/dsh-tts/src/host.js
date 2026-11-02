@@ -59,9 +59,13 @@ function readBody(req, limit) {
   })
 }
 
-/** Read the API key from the configured env var; null when unset or empty. */
+/**
+ * Read the API key: '' opts out of auth (unauthenticated endpoint), null means
+ * the configured env var is missing or empty.
+ */
 function readApiKey(openai) {
-  const value = openai.apiKeyEnv === '' ? undefined : process.env[openai.apiKeyEnv]
+  if (openai.apiKeyEnv === '') return ''
+  const value = process.env[openai.apiKeyEnv]
   if (typeof value !== 'string' || value.trim().length === 0) return null
   return value.trim()
 }
@@ -196,7 +200,11 @@ export function createSpeakHandler(config, deps = {}) {
     try {
       const response = await fetchImpl(openai.baseUrl + '/audio/speech', {
         method: 'POST',
-        headers: { ...openai.headers, 'content-type': 'application/json', authorization: 'Bearer ' + apiKey },
+        headers: {
+          ...openai.headers,
+          'content-type': 'application/json',
+          ...(apiKey === '' ? {} : { authorization: 'Bearer ' + apiKey }),
+        },
         body: JSON.stringify({
           // Model-specific fields first (e.g. Drama 3 ref_audio/ref_text); the
           // standard contract below always wins on conflict.
