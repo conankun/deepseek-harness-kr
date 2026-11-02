@@ -2,7 +2,7 @@
   "name": "dsh-tts",
   "version": "0.1.0",
   "private": true,
-  "description": "Speech for the DeepSeek Harness character's speech bubbles — streaming OpenAI-compatible TTS, lipsync from the audio",
+  "description": "Speech for the DeepSeek Harness character's speech bubbles — streaming OpenAI-compatible TTS, audio-level mouth movement (approximate; precise lip-sync is TODO)",
   "type": "module",
   "exports": {
     ".": "./src/index.js",
