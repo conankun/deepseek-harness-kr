@@ -357,3 +357,21 @@ test('cache disabled calls upstream on every repeat', async () => {
     delete process.env[KEY_ENV]
   }
 })
+
+test('textPrefix is prepended to the upstream input', async () => {
+  process.env[KEY_ENV] = 'test-key'
+  const upstream = await startUpstream()
+  const host = await startHost(upstream.port, {
+    openai: { apiKeyEnv: KEY_ENV, textPrefix: '[bright and playful] ' },
+  })
+  try {
+    const response = await speak(host.url, { text: 'hello' })
+    assert.equal(response.status, 200)
+    await response.arrayBuffer()
+    assert.equal(upstream.stats.bodies.at(-1).input, '[bright and playful] hello')
+  } finally {
+    await host.close()
+    await upstream.close()
+    delete process.env[KEY_ENV]
+  }
+})

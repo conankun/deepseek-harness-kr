@@ -30,6 +30,7 @@ openai:
   headers: {}                # 업스트림 추가 헤더 (Authorization은 덮어쓸 수 없음)
   timeoutMs: 30000
   extraBody: {}              # 모델 전용 필드(비이식성). 예: Drama 3 ref_audio/ref_text. 표준 필드가 우선
+  textPrefix: ""             # 모델 전용 연출 접두사(비이식성). Drama 3: "[밝고 장난기 있는 20대 여성] "
 stream:
   enabled: true              # 스트리밍이 유일한 전송 방식이라 끄면 기능 전체가 꺼짐
   pcmSampleRate: 24000
@@ -47,6 +48,19 @@ limits:
   maxCharsPerLine: 300
   maxBytes: 16777216
 ```
+
+## voice / 모델별 프롬프트
+
+- `openai.voice`는 **표준 OpenAI 필드**입니다(값만 엔드포인트별로 다름). `default`처럼 고정되지 않은 이름은 발화마다
+  화자가 바뀔 수 있으므로, **서버에 등록된 보이스 id**를 쓰세요. 서버는 등록된 업로드 보이스를
+  `<이름>-<해시>`(예: `yuna-0293b7ba…`)로 노출하며, 해시는 업로드한 참조 클립 내용에서 파생된 식별자입니다
+  (Fish Audio 클라우드의 `reference_id`에 해당). `GET {baseUrl}/../audio/voices`(서버 루트 `/v1/audio/voices`)로 목록과
+  `ref_text`·동의 메타데이터를 확인할 수 있습니다.
+- `openai.textPrefix`는 **모델 전용 연출 접두사**입니다(비이식성). Drama 3는 대본 안의 대괄호 지시문으로 연기를
+  지시합니다 — `[밝고 장난기 있는 20대 여성, 친구에게 말하듯 편안하게] `처럼 **매 대사 앞에** 붙여 일관된 톤을 만듭니다.
+  영어/한국어 등 아무 언어나 가능하며, `[sigh]`·`[pause]` 같은 소리/멈춤도 지원합니다.
+  참고: <https://docs.fish.audio/features/text-to-speech/drama-3>
+- `openai.extraBody`는 그 밖의 **모델 전용 요청 필드**(예: `ref_audio`, `ref_text`, `language`)를 그대로 병합합니다.
 
 ## 라우트 계약
 

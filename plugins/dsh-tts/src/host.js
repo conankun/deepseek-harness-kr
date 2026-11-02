@@ -159,7 +159,9 @@ export function createSpeakHandler(config, deps = {}) {
       return
     }
 
-    const key = cacheKey(openai.model, openai.voice, text, JSON.stringify(openai.extraBody ?? {}))
+    // Model-specific direction prefix (e.g. Drama 3 "[bright, playful] ").
+    const spokenText = openai.textPrefix + text
+    const key = cacheKey(openai.model, openai.voice, spokenText, JSON.stringify(openai.extraBody ?? {}))
     const cached = cache?.get(key) ?? null
     if (cached !== null) {
       res.writeHead(200, pcmHeaders('hit', cached.length))
@@ -201,7 +203,7 @@ export function createSpeakHandler(config, deps = {}) {
           ...openai.extraBody,
           model: openai.model,
           voice: openai.voice,
-          input: text,
+          input: spokenText,
           response_format: 'pcm',
           stream_format: 'audio',
           ...(openai.speed === 1 ? {} : { speed: openai.speed }),

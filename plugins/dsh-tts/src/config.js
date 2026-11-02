@@ -10,7 +10,7 @@
 /** Defaults, exactly as documented in cordis.patch.yml. */
 export const DEFAULTS = {
   enabled: false,
-  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini-tts', voice: 'alloy', speed: 1, apiKeyEnv: 'OPENAI_API_KEY', headers: {}, timeoutMs: 30000, extraBody: {} },
+  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini-tts', voice: 'alloy', speed: 1, apiKeyEnv: 'OPENAI_API_KEY', headers: {}, timeoutMs: 30000, extraBody: {}, textPrefix: '' },
   stream: { enabled: true, pcmSampleRate: 24000 },
   voiceLines: { reactions: true, status: false, mutters: false, others: true },
   cache: { enabled: true, maxEntries: 200, ttlMs: 604800000, maxCacheBytes: 33554432 },
@@ -76,6 +76,14 @@ function jsonObject(source, key, path, fallback) {
   }
 }
 
+/** Optional string that may be empty (model-specific text prefix). */
+function optionalText(source, key, path, fallback) {
+  const value = source[key]
+  const resolved = value === undefined ? fallback : value
+  if (typeof resolved !== 'string') fail(path, 'a string', resolved)
+  return resolved
+}
+
 function stringMap(source, key, path) {
   const value = source[key]
   if (value === undefined) return {}
@@ -113,6 +121,7 @@ export function normalize(raw) {
       headers: stringMap(openai, 'headers', 'openai.headers'),
       timeoutMs: num(openai, 'timeoutMs', 'openai.timeoutMs', DEFAULTS.openai.timeoutMs, 1000, 600000, { integer: true }),
       extraBody: jsonObject(openai, 'extraBody', 'openai.extraBody', DEFAULTS.openai.extraBody),
+      textPrefix: optionalText(openai, 'textPrefix', 'openai.textPrefix', DEFAULTS.openai.textPrefix),
     },
     stream: {
       enabled: bool(stream, 'enabled', 'stream.enabled', DEFAULTS.stream.enabled),
