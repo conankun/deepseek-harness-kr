@@ -171,13 +171,15 @@ async function apply(ctx) {
     return audioContext;
   };
   function clearMeter(session) {
-    clearTimeout(session.hold);
     if (session.frame !== 0) cancelAnimationFrame(session.frame);
     session.frame = 0;
-    session.hold = 0;
   }
   function teardown(session) {
     clearMeter(session);
+    if (session.watchdog !== 0) {
+      clearTimeout(session.watchdog);
+      session.watchdog = 0;
+    }
     session.scheduler?.stop();
     session.scheduler = null;
     try {
@@ -211,28 +213,22 @@ async function apply(ctx) {
     };
     session.frame = requestAnimationFrame(tick);
   }
+  function release(session) {
+    if (playback !== session) return;
+    playback = null;
+    teardown(session);
+    voice(null);
+  }
   function endStream(session) {
     if (playback !== session) return;
-    clearMeter(session);
-    const idle = () => {
-      try {
-        session.analyser?.disconnect();
-      } catch {
-      }
-      session.analyser = null;
-    };
-    session.scheduler.onIdle = idle;
-    if (!session.scheduler.active) idle();
-    if (session.ms > 0) {
-      voice({ speaking: true, level: 0, until: session.bubbleEnd });
-      session.hold = setTimeout(() => {
-        if (playback === session) playback = null;
-        voice(null);
-      }, Math.max(0, session.bubbleEnd - performance.now()));
-    } else {
-      playback = null;
-      voice(null);
+    const scheduler = session.scheduler;
+    scheduler.onIdle = () => release(session);
+    if (!scheduler.active) {
+      release(session);
+      return;
     }
+    const remaining = Math.max(0, scheduler.endTime - session.audio.currentTime);
+    session.watchdog = setTimeout(() => release(session), remaining * 1e3 + 1e3);
   }
   async function speak(detail) {
     stopPlayback();
@@ -245,10 +241,10 @@ async function apply(ctx) {
       controller,
       analyser: null,
       scheduler: null,
+      audio: null,
       frame: 0,
-      hold: 0,
-      ms,
-      bubbleEnd: startedAt + ms
+      watchdog: 0,
+      ms
     };
     playback = session;
     const deadline = startedAt + (ms > 0 ? Math.min(ms, FIRST_CHUNK_LIMIT_MS) : FIRST_CHUNK_LIMIT_MS);
@@ -262,6 +258,7 @@ async function apply(ctx) {
       if (!response.ok || response.body === null) throw new Error("dsh-tts: speak failed with " + response.status);
       const audio = getAudioContext();
       if (audio === null) throw new Error("dsh-tts: no AudioContext");
+      session.audio = audio;
       if (playback !== session) return;
       try {
         await audio.resume();
